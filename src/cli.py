@@ -1,7 +1,8 @@
 import sys
 import subprocess
+import argparse
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 def find_ale_directory() -> Optional[Path]:
     """
@@ -13,13 +14,39 @@ def find_ale_directory() -> Optional[Path]:
 
     return ale_dir if ale_dir.is_dir() else None
 
-def run_command(script_path: Path, args: List[str]) -> int:
+def parse_args() -> Tuple[argparse.Namespace, str, List[str]]:
+    """
+    Parse command line arguments.
+    Returns tuple of (parsed_args, script_name, script_args)
+    """
+    parser = argparse.ArgumentParser(
+        description='ALE command-line tool',
+        usage='ale [-i] script_name [arg1 [arg2 ...]]'
+    )
+    parser.add_argument('-i', '--interactive', action='store_true',
+                       help='Run Python scripts in interactive mode')
+
+    args, remaining = parser.parse_known_args()
+
+    if not remaining:
+        parser.print_help()
+        sys.exit(1)
+
+    script_name = remaining[0]
+    script_args = remaining[1:]
+
+    return args, script_name, script_args
+
+def run_command(script_path: Path, args: List[str], interactive: bool = False) -> int:
     """
     Run the specified script with given arguments.
     Returns the exit code from the script execution.
     """
     if script_path.suffix == '.py':
-        command = [sys.executable, str(script_path)] + args
+        command = [sys.executable]
+        if interactive:
+            command.append('-i')
+        command.extend([str(script_path)] + args)
     elif script_path.suffix == '.sh':
         command = ['bash', str(script_path)] + args
     else:
@@ -41,16 +68,13 @@ def main() -> int:
     Main entry point for the ALE command-line tool.
     Returns exit code.
     """
-    if len(sys.argv) < 2:
-        print("Usage: ale script_name [arg1 [arg2 ...]]", file=sys.stderr)
-        return 1
+    args, script_name, script_args = parse_args()
 
     ale_dir = find_ale_directory()
     if not ale_dir:
         print("Error: No .ale directory found in current working directory", file=sys.stderr)
         return 1
 
-    script_name = sys.argv[1]
     script_path = ale_dir / script_name
 
     if not script_path.exists():
@@ -61,4 +85,4 @@ def main() -> int:
         print(f"Error: '{script_name}' is not a file", file=sys.stderr)
         return 1
 
-    return run_command(script_path, sys.argv[2:])
+    return run_command(script_path, script_args, args.interactive)
