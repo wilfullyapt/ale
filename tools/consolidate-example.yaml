@@ -1,29 +1,39 @@
 backend:              # Root level directory
-  - src/workers/extraction_worker.py
-  - src/auth.py
-  - src/database_models.py
-  - src/extrat.py
-  - src/logger.py
-  - src/main.py
-  - src/tokener.py
-  - src/websockets.py
+  files:
+    - src/workers/extraction_worker.py
+    - src/auth.py
+    - src/database_models.py
+    - src/extrat.py
+    - src/logger.py
+    - src/main.py
+    - src/tokener.py
+    - src/websockets.py
+  ignore:
+    - "**/__pycache__/**"
+    - "**/*.pyc"
+    - ".pytest_cache/**"
 frontend:             # Root level directory
-  - app/auth/login/page.tsx
-  - app/auth/signup/page.tsx
-  - app/auth/signup/layout.tsx
-  - app/protected/dashboard/page.tsx
-  - app/protected/extract/page.tsx
-  - app/protected/videos/page.tsx
-  - app/protected/dashboard/page.tsx
-  - components/ExtractionForm.js
-  - components/Nav.js
-  - components/ThemeToggle.js
-  - components/VideoList.js
-  - context/auth-context.tsx
-  - hooks/use-auth.tsx
-  - hooks/use-toast.ts
-  - lib/auth.ts
-  - lib/axios.js
-  - lib/utils.js
-  - providers/theme-provider.tsx
-  - types/auth.ts
+  files:
+    - app/auth/login/page.tsx
+    - app/auth/signup/page.tsx
+    - app/auth/signup/layout.tsx
+    - app/protected/dashboard/page.tsx
+    - app/protected/extract/page.tsx
+    - app/protected/videos/page.tsx
+    - app/protected/dashboard/page.tsx
+    - components/ExtractionForm.js
+    - components/Nav.js
+    - components/ThemeToggle.js
+    - components/VideoList.js
+    - context/auth-context.tsx
+    - hooks/use-auth.tsx
+    - hooks/use-toast.ts
+    - lib/auth.ts
+    - lib/axios.js
+    - lib/utils.js
+    - providers/theme-provider.tsx
+    - types/auth.ts
+  ignore:
+    - "node_modules/**"
+    - ".next/**"
+    - "**/*.log"

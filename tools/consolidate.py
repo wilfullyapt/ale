@@ -34,12 +34,13 @@ class ConsolidateConfig:
     output_dir: str = 'consolidations'
     recursive: bool = False
     dry_run: bool = False
+    ignore: bool = True  # Enable ignore patterns by default
 
 def parse_args() -> ConsolidateConfig:
     """Parse command line arguments and return a ConsolidateConfig instance"""
     parser = argparse.ArgumentParser(description='Consolidate files tool')
 
-    parser.add_argument('--dir', '-i',
+    parser.add_argument('--dir', '-d',
                        default=".",
                        help='Input path to process (default: current directory)')
 
@@ -54,6 +55,16 @@ def parse_args() -> ConsolidateConfig:
                        action='store_true',
                        help='Show what would be done without making changes')
 
+    parser.add_argument('--ignore', '-i',
+                       action='store_true',
+                       default=True,
+                       help='Use ignore patterns from YAML file (default: enabled)')
+
+    parser.add_argument('--no-ignore',
+                       action='store_false',
+                       dest='ignore',
+                       help='Disable ignore patterns from YAML file')
+
     args = parser.parse_args()
 
     if args.output_dir is None:
@@ -63,7 +74,8 @@ def parse_args() -> ConsolidateConfig:
         dir=args.dir,
         output_dir=args.output_dir,
         recursive=args.recursive,
-        dry_run=args.dry_run
+        dry_run=args.dry_run,
+        ignore=args.ignore
     )
 
 def read_yaml_config() -> Dict[str, Any]:
@@ -80,18 +92,47 @@ def read_yaml_config() -> Dict[str, Any]:
         except yaml.YAMLError as e:
             raise yaml.YAMLError(f"Error parsing YAML file {config_path}: {e}")
 
+from fnmatch import fnmatch
+
+def should_ignore(path: str, ignore_patterns: list) -> bool:
+    """
+    Check if a path matches any of the ignore patterns.
+    Patterns use Unix shell-style wildcards.
+    """
+    return any(fnmatch(path, pattern) for pattern in ignore_patterns)
+
 def get_files_per_output(config, files):
     """ Returns a key, value pair Dict for files to copy """
-
     working_dir = Path(__file__).parent.parent / config.dir
     if not working_dir.is_dir():
         raise NotADirectoryError(f"Directory not found: {working_dir}")
 
+    result = {}
     if config.dir in files:
-        files = files[config.dir]
+        dir_config = files[config.dir]
+        file_list = dir_config.get('files', [])
+        ignore_patterns = dir_config.get('ignore', []) if config.ignore else []
+        
+        for file in file_list:
+            if not should_ignore(file, ignore_patterns):
+                result[file.replace('/', '.')] = working_dir / file
     else:
-        files = [ f"{dir}/{file_path}" for dir in files for file_path in files[dir] ]
-    return { file.replace('/', '.') : working_dir/file for file in files }
+        # Handle old format or multiple directories
+        for dir_name, dir_config in files.items():
+            if isinstance(dir_config, list):
+                # Old format without ignore patterns
+                file_list = dir_config
+                ignore_patterns = []
+            else:
+                file_list = dir_config.get('files', [])
+                ignore_patterns = dir_config.get('ignore', []) if config.ignore else []
+
+            for file in file_list:
+                full_path = f"{dir_name}/{file}"
+                if not should_ignore(full_path, ignore_patterns):
+                    result[full_path.replace('/', '.')] = working_dir / full_path
+
+    return result
 
 if __name__ == '__main__':
     """
