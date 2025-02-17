@@ -29,14 +29,45 @@ def find_script_path(script_name: str) -> Optional[Path]:
 
     return None
 
-def parse_args() -> Tuple[argparse.Namespace, str, List[str]]:
+def init_ale_directory() -> int:
+    """
+    Initialize .ale directory in current working directory.
+    Returns exit code.
+    """
+    current_dir = Path.cwd()
+    ale_dir = current_dir / '.ale'
+
+    if ale_dir.exists():
+        print("Error: .ale directory already exists", file=sys.stderr)
+        return 1
+
+    try:
+        # Create .ale directory
+        ale_dir.mkdir()
+        
+        # Copy example consolidation yaml
+        package_dir = Path(__file__).parent.parent
+        example_yaml = package_dir / 'tools' / 'consolidate-example.yaml'
+        if example_yaml.exists():
+            shutil.copy2(example_yaml, ale_dir / 'consolidate.yaml')
+            print(f"Created .ale directory and copied consolidate.yaml")
+            return 0
+        else:
+            print("Warning: Could not find example consolidate.yaml", file=sys.stderr)
+            return 0
+    except Exception as e:
+        print(f"Error creating .ale directory: {e}", file=sys.stderr)
+        return 1
+
+def parse_args() -> Tuple[argparse.Namespace, Optional[str], List[str]]:
     """
     Parse command line arguments.
     Returns tuple of (parsed_args, script_name, script_args)
+    script_name can be None for built-in commands like 'init'
     """
     parser = argparse.ArgumentParser(
         description='ALE command-line tool',
-        usage='ale [-i] script_name [arg1 [arg2 ...]]'
+        usage='ale [-i] (init | script_name [arg1 [arg2 ...]])'
     )
     parser.add_argument('-i', '--interactive', action='store_true',
                        help='Run Python scripts in interactive mode')
@@ -47,10 +78,11 @@ def parse_args() -> Tuple[argparse.Namespace, str, List[str]]:
         parser.print_help()
         sys.exit(1)
 
-    script_name = remaining[0]
-    script_args = remaining[1:]
+    command = remaining[0]
+    if command == 'init':
+        return args, None, []
 
-    return args, script_name, script_args
+    return args, command, remaining[1:]
 
 def run_command(script_path: Path, args: List[str], interactive: bool = False) -> int:
     """
@@ -84,6 +116,10 @@ def main() -> int:
     Returns exit code.
     """
     args, script_name, script_args = parse_args()
+
+    # Handle built-in commands
+    if script_name is None:
+        return init_ale_directory()
 
     script_path = find_script_path(script_name)
     if not script_path:
