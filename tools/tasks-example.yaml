@@ -1,0 +1,61 @@
+install:
+  description: Install project dependencies
+  run: poetry install
+
+lint:
+  description: Run linting checks
+  deps: [install]
+  run:
+    - poetry run flake8 src/
+    - poetry run mypy src/
+
+test:
+  description: Run tests
+  deps: [install]
+  run: poetry run pytest tests/
+
+build:
+  description: Build the project
+  deps: [lint, test]
+  run: poetry build
+
+dev:
+  description: Start development server
+  deps: [install]
+  env:
+    FLASK_ENV: development
+    DEBUG: "1"
+  run: poetry run flask run --host=0.0.0.0
+
+clean:
+  description: Clean build artifacts
+  run:
+    - rm -rf dist/
+    - rm -rf build/
+    - find . -type d -name "__pycache__" -exec rm -rf {} +
+
+deploy-staging:
+  description: Deploy to staging environment
+  deps: [build]
+  env:
+    ENVIRONMENT: staging
+  run: ./scripts/deploy.sh staging
+
+deploy-prod:
+  description: Deploy to production environment
+  deps: [build]
+  env:
+    ENVIRONMENT: production
+  run: ./scripts/deploy.sh production
+
+db-migrate:
+  description: Run database migrations
+  env:
+    DATABASE_URL: postgresql://localhost/myapp
+  run: alembic upgrade head
+
+db-rollback:
+  description: Rollback last database migration
+  env:
+    DATABASE_URL: postgresql://localhost/myapp
+  run: alembic downgrade -1
