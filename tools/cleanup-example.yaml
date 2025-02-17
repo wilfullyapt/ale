@@ -1,0 +1,59 @@
+python:
+  description: Clean Python build artifacts and cache
+  patterns:
+    - "**/__pycache__"
+    - "**/*.pyc"
+    - "**/*.pyo"
+    - "**/*.pyd"
+    - "**/.pytest_cache"
+    - "**/.coverage"
+    - "**/htmlcov"
+    - "build/"
+    - "dist/"
+    - "**/*.egg-info"
+
+node:
+  description: Clean Node.js build artifacts and dependencies
+  patterns:
+    - "node_modules/"
+    - ".next/"
+    - "build/"
+    - "dist/"
+    - "**/*.log"
+    - ".cache/"
+    - "coverage/"
+
+temp:
+  description: Clean temporary files
+  patterns:
+    - "**/*.tmp"
+    - "**/*.temp"
+    - "**/*.swp"
+    - "**/*.swo"
+    - "**/*~"
+
+logs:
+  description: Clean log files
+  patterns:
+    - "**/*.log"
+    - "**/logs/"
+    - "**/log/"
+
+docker:
+  description: Clean Docker artifacts
+  patterns:
+    - "**/*.tar"
+    - ".docker/"
+    - "**/docker-compose.override.yml"
+
+ide:
+  description: Clean IDE artifacts
+  patterns:
+    - "**/.idea/"
+    - "**/.vscode/"
+    - "**/*.sublime-workspace"
+    - "**/*.sublime-project"
+    - "**/.vs/"
+    - "**/.settings/"
+    - "**/.project"
+    - "**/.classpath"

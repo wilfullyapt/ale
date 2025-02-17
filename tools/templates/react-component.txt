@@ -1,0 +1,15 @@
+import React from 'react';
+
+interface {{NAME}}Props {
+  // Add props here
+}
+
+export const {{NAME}}: React.FC<{{NAME}}Props> = (props) => {
+  return (
+    <div>
+      {/* Add component content */}
+    </div>
+  );
+};
+
+export default {{NAME}};
