@@ -1,4 +1,17 @@
 #!/usr/bin/env python3
+"""
+Template management tool for creating and applying file templates.
+
+This tool helps manage and apply file templates stored in the tools/templates
+directory. Templates can contain variables (e.g., {{NAME}}) that will be
+replaced when applying the template.
+
+Features:
+- List available templates
+- Apply templates to new or existing files
+- Support for variable substitution
+- Automatic name extraction from file path
+"""
 import sys
 import argparse
 from pathlib import Path

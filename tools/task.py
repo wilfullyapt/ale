@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+"""
+Task runner for executing project-specific tasks and commands.
+
+This tool helps manage and execute project tasks defined in a YAML
+configuration file, supporting dependencies, environment variables,
+and command sequences.
+
+Features:
+- Task dependencies
+- Environment variable support
+- Dry-run mode
+- Task listing and documentation
+- Error handling and reporting
+"""
 import sys
 import os
 import argparse

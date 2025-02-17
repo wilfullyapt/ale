@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+"""
+Configuration management tool for project configuration files.
+
+This tool helps manage various configuration files in your project,
+providing initialization, validation, and templating capabilities
+for common configuration formats.
+
+Features:
+- Initialize configs from templates
+- Validate configs against schemas
+- Support for YAML, JSON, and TOML
+- Multiple config profiles
+- Config file templating
+"""
 import sys
 import argparse
 from pathlib import Path

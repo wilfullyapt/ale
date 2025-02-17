@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+"""
+Project statistics tool for analyzing project structure and metrics.
+
+This tool provides insights into your project by analyzing various
+aspects such as file distribution, Git statistics, and language-specific
+metrics.
+
+Features:
+- File type distribution and sizes
+- Git repository statistics (commits, contributors, age)
+- Python-specific metrics (coverage, dependencies)
+- Human-readable size formatting
+- Directory-specific analysis
+"""
 import sys
 import argparse
 from pathlib import Path

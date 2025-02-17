@@ -59,15 +59,127 @@ def init_ale_directory() -> int:
         print(f"Error creating .ale directory: {e}", file=sys.stderr)
         return 1
 
+def get_tool_docs() -> Dict[str, str]:
+    """
+    Get documentation for all tools by extracting their docstrings.
+    Returns a dictionary of tool name to documentation.
+    """
+    tools_dir = Path(__file__).parent.parent / 'tools'
+    docs = {}
+
+    if not tools_dir.is_dir():
+        return docs
+
+    for tool_path in tools_dir.glob('*.py'):
+        if tool_path.name.startswith('_'):
+            continue
+
+        try:
+            # Read the file content
+            with open(tool_path, 'r') as f:
+                content = f.read()
+
+            # Use ast to safely extract the docstring
+            import ast
+            tree = ast.parse(content)
+            docstring = ast.get_docstring(tree)
+
+            if docstring:
+                # Clean up the docstring
+                docs[tool_path.stem] = docstring.strip()
+            else:
+                # If no module docstring, try to get main() docstring
+                for node in tree.body:
+                    if isinstance(node, ast.FunctionDef) and node.name == 'main':
+                        if node.body and isinstance(node.body[0], ast.Expr):
+                            if isinstance(node.body[0].value, ast.Str):
+                                docs[tool_path.stem] = node.body[0].value.s.strip()
+                                break
+        except Exception as e:
+            print(f"Warning: Could not extract docs from {tool_path.name}: {e}", 
+                  file=sys.stderr)
+
+    return docs
+
+def print_help() -> None:
+    """Print detailed help information"""
+    print("""ALE (Access Local Execution) - Project-specific CLI tool
+
+Usage:
+    ale [-i] <command> [args...]
+    ale help                 Show this help message
+    ale tools               List available tools and their documentation
+    ale init                Initialize .ale directory in current directory
+    ale <script> [args...]  Run a script from .ale or tools directory
+
+Options:
+    -i, --interactive       Run Python scripts in interactive mode
+
+Commands:
+    help     Show this help message
+    tools    List available tools and their documentation
+    init     Initialize .ale directory
+    
+Built-in Tools:
+    template.py    Manage and apply file templates
+    task.py       Run project-specific tasks
+    cleanup.py    Clean project artifacts
+    stats.py      Show project statistics
+    config.py     Manage project configurations
+    merge.py      Merge files from .ale mirror directory
+
+Examples:
+    # Initialize a new .ale directory
+    ale init
+
+    # Run a script with arguments
+    ale script.py arg1 arg2
+
+    # Run a built-in tool
+    ale template.py list
+    ale cleanup.py python
+    ale stats.py
+
+    # Run a Python script in interactive mode
+    ale -i script.py
+
+For more information about a specific tool:
+    ale <tool_name> --help
+""")
+
+def print_tools() -> None:
+    """Print available tools and their documentation"""
+    docs = get_tool_docs()
+    
+    if not docs:
+        print("No tools found or unable to read tool documentation.")
+        return
+
+    print("\nAvailable Tools:\n")
+    
+    for tool_name, doc in sorted(docs.items()):
+        print(f"{tool_name}:")
+        # Format the documentation
+        if doc:
+            # Split into lines and remove empty lines at start/end
+            lines = [line.strip() for line in doc.split('\n')]
+            lines = [line for line in lines if line]
+            # Print first paragraph (stop at first empty line)
+            for line in lines:
+                if not line:
+                    break
+                print(f"    {line}")
+        print()  # Empty line between tools
+
 def parse_args() -> Tuple[argparse.Namespace, Optional[str], List[str]]:
     """
     Parse command line arguments.
     Returns tuple of (parsed_args, script_name, script_args)
-    script_name can be None for built-in commands like 'init'
+    script_name can be None for built-in commands
     """
     parser = argparse.ArgumentParser(
         description='ALE command-line tool',
-        usage='ale [-i] (init | script_name [arg1 [arg2 ...]])'
+        usage='ale [-i] (help | tools | init | script_name [arg1 [arg2 ...]])'
     )
     parser.add_argument('-i', '--interactive', action='store_true',
                        help='Run Python scripts in interactive mode')
@@ -75,11 +187,19 @@ def parse_args() -> Tuple[argparse.Namespace, Optional[str], List[str]]:
     args, remaining = parser.parse_known_args()
 
     if not remaining:
-        parser.print_help()
+        print_help()
         sys.exit(1)
 
     command = remaining[0]
-    if command == 'init':
+    
+    # Handle built-in commands
+    if command == 'help':
+        print_help()
+        sys.exit(0)
+    elif command == 'tools':
+        print_tools()
+        sys.exit(0)
+    elif command == 'init':
         return args, None, []
 
     return args, command, remaining[1:]

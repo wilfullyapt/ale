@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+"""
+File merge tool for syncing files between project and .ale mirror.
+
+This tool helps synchronize files between your project and a mirror
+directory in .ale, allowing you to stage changes in the mirror before
+applying them to the project.
+
+Features:
+- Bi-directional file syncing
+- Preserve file structure
+- Dry-run mode
+- Detailed change reporting
+- Safe file comparison
+"""
 import sys
 import shutil
 from pathlib import Path

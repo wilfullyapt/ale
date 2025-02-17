@@ -1,4 +1,17 @@
 #!/usr/bin/env python3
+"""
+Project cleanup tool for removing temporary files and build artifacts.
+
+This tool helps maintain a clean project by removing temporary files,
+build artifacts, and other unwanted files based on patterns defined
+in a YAML configuration file.
+
+Features:
+- Pattern-based file matching
+- Predefined cleanup groups (python, node, temp, etc.)
+- Dry-run mode to preview changes
+- Safe pattern matching with Unix-style wildcards
+"""
 import sys
 import argparse
 from pathlib import Path
