@@ -1,4 +1,4 @@
-backend:
+backend:              # Root level directory
   - src/workers/extraction_worker.py
   - src/auth.py
   - src/database_models.py
@@ -7,7 +7,7 @@ backend:
   - src/main.py
   - src/tokener.py
   - src/websockets.py
-frontend:
+frontend:             # Root level directory
   - app/auth/login/page.tsx
   - app/auth/signup/page.tsx
   - app/auth/signup/layout.tsx
