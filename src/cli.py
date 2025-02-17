@@ -4,15 +4,30 @@ import argparse
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-def find_ale_directory() -> Optional[Path]:
+def find_script_path(script_name: str) -> Optional[Path]:
     """
-    Find the .ale directory in the current working directory.
-    Returns None if not found.
+    Find the script in either:
+    1. Local .ale directory
+    2. Package tools directory
+    Returns None if not found in either location.
     """
+    # First check local .ale directory
     current_dir = Path.cwd()
-    ale_dir = current_dir / '.ale'
+    local_ale_dir = current_dir / '.ale'
+    if local_ale_dir.is_dir():
+        script_path = local_ale_dir / script_name
+        if script_path.is_file():
+            return script_path
 
-    return ale_dir if ale_dir.is_dir() else None
+    # Then check package tools directory
+    package_dir = Path(__file__).parent.parent
+    tools_dir = package_dir / 'tools'
+    if tools_dir.is_dir():
+        script_path = tools_dir / script_name
+        if script_path.is_file():
+            return script_path
+
+    return None
 
 def parse_args() -> Tuple[argparse.Namespace, str, List[str]]:
     """
@@ -70,15 +85,9 @@ def main() -> int:
     """
     args, script_name, script_args = parse_args()
 
-    ale_dir = find_ale_directory()
-    if not ale_dir:
-        print("Error: No .ale directory found in current working directory", file=sys.stderr)
-        return 1
-
-    script_path = ale_dir / script_name
-
-    if not script_path.exists():
-        print(f"Error: Script '{script_name}' not found in .ale directory", file=sys.stderr)
+    script_path = find_script_path(script_name)
+    if not script_path:
+        print(f"Error: Script '{script_name}' not found in .ale directory or tools directory", file=sys.stderr)
         return 1
 
     if not script_path.is_file():
