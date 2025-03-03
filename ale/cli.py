@@ -1,8 +1,9 @@
 import sys
 import subprocess
 import argparse
+import shutil
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 
 def find_script_path(script_name: str) -> Optional[Path]:
     """

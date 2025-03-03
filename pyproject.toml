@@ -6,7 +6,7 @@ authors = ["William Mawhinney <wilmawhinney@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 packages = [
-    { include = "src" },
+    { include = "ale" },
     { include = "tools" }
 ]
 classifiers = [
@@ -37,4 +37,4 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-ale = "src.cli:main"
+ale = "ale.cli:main"
