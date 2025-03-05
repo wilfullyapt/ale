@@ -3,7 +3,7 @@ import os
 import sys
 import shutil
 from pathlib import Path
-from ale.cli import find_script_path, run_command, init_ale_directory, get_tool_docs, parse_args
+from ale.cli import find_script_path, run_command, init_ale_directory, get_tool_docs, parse_args, find_ale_directory, main
 
 def test_find_script_path(tmp_path):
     # Setup test environment
