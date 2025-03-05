@@ -5,6 +5,19 @@ import shutil
 from pathlib import Path
 from typing import List, Optional, Tuple, Dict
 
+def find_ale_directory() -> Optional[Path]:
+    """
+    Find the .ale directory by traversing up from current directory.
+    Returns None if not found.
+    """
+    current = Path.cwd()
+    while current != current.parent:
+        ale_dir = current / '.ale'
+        if ale_dir.is_dir():
+            return ale_dir
+        current = current.parent
+    return None
+
 def find_script_path(script_name: str) -> Optional[Path]:
     """
     Find the script in either:
@@ -13,9 +26,8 @@ def find_script_path(script_name: str) -> Optional[Path]:
     Returns None if not found in either location.
     """
     # First check local .ale directory
-    current_dir = Path.cwd()
-    local_ale_dir = current_dir / '.ale'
-    if local_ale_dir.is_dir():
+    local_ale_dir = find_ale_directory()
+    if local_ale_dir:
         script_path = local_ale_dir / script_name
         if script_path.is_file():
             return script_path

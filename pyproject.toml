@@ -31,10 +31,11 @@ keywords = ["cli", "local", "execution", "automation"]
 [tool.poetry.dependencies]
 python = "^3.9"
 pyyaml = "^6.0.1"
+jsonschema = "^4.23.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"
 pytest-cov = "^6.0.0"
 
 [tool.poetry.scripts]
-ale = "src.cli:main"
+ale = "ale.cli:main"

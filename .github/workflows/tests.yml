@@ -1,21 +1,40 @@
-name: Run Tests
+name: Tests & Coverage
 
 on:
   push:
     branches: [ '*' ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
   pull_request:
     branches: [ '*' ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
+
+# Cancel in-progress runs for PRs when new commits are pushed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test:
+    name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: ${{ matrix.python-version }}
           
       - name: Install Poetry
         uses: snok/install-poetry@v1
@@ -24,13 +43,61 @@ jobs:
           virtualenvs-create: true
           virtualenvs-in-project: true
           
+      - name: Cache Poetry virtualenv
+        uses: actions/cache@v4
+        id: poetry-cache
+        with:
+          path: |
+            .venv
+            ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+          restore-keys: |
+            poetry-${{ runner.os }}-py${{ matrix.python-version }}-
+            poetry-${{ runner.os }}-
+          
       - name: Install dependencies
-        run: poetry install
+        if: steps.poetry-cache.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
         
-      - name: Run tests with coverage
-        run: poetry run pytest --cov=ale --cov=tools --cov-report=xml --cov-report=term-missing
+      - name: Install project
+        run: poetry install --no-interaction
 
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      - name: Run tests with coverage
+        id: tests
+        run: |
+          poetry run pytest \
+            --cov=ale --cov=tools \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --cov-fail-under=30 \
+            --junitxml=test-results.xml
+
+      - name: Generate test summary
+        if: always()
+        run: |
+          echo "## Test Results (Python ${{ matrix.python-version }})" >> $GITHUB_STEP_SUMMARY
+          echo "✨ Tests completed with exit code: ${{ steps.tests.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          poetry run coverage report >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.python-version }}
+          path: |
+            test-results.xml
+            coverage.xml
+          retention-days: 30
+
+# Codecov upload removed - no integration configured
+
+      - name: Verify coverage meets threshold
+        run: |
+          COVERAGE=$(poetry run coverage report | grep TOTAL | awk '{print $4}' | sed 's/%//')
+          if (( $(echo "$COVERAGE < 30" | bc -l) )); then
+            echo "::error::Coverage $COVERAGE% is below threshold of 30%"
+            exit 1
+          fi
+          echo "::notice::Coverage is $COVERAGE% (threshold: 30%)"

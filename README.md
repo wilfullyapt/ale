@@ -1,5 +1,9 @@
 # Access Local Execution (ALE)
 
+[![Tests & Coverage](https://github.com/wilfullyapt/ale/actions/workflows/tests.yml/badge.svg)](https://github.com/wilfullyapt/ale/actions/workflows/tests.yml)
+[![codecov](https://codecov.io/gh/wilfullyapt/ale/branch/dev/graph/badge.svg)](https://codecov.io/gh/wilfullyapt/ale)
+[![Python Versions](https://img.shields.io/pypi/pyversions/ale-cli.svg)](https://pypi.org/project/ale-cli/)
+
 ALE is a command-line tool designed to run local files (`.py`, `.sh`) from a designated `.ale` directory. It provides a convenient way to organize and execute project-specific scripts and tools.
 
 ## Installation

@@ -12,7 +12,18 @@ def cleanup_config(temp_dir):
     config = {
         'python': {
             'description': 'Clean Python build artifacts',
-            'patterns': ['*.pyc', '__pycache__/*', 'build/*', 'dist/*']
+            'patterns': [
+                "**/__pycache__",
+                "**/*.pyc",
+                "**/*.pyo",
+                "**/*.pyd",
+                "**/.pytest_cache",
+                "**/.coverage",
+                "**/htmlcov",
+                "build/",
+                "dist/",
+                "**/*.egg-info"
+            ]
         },
         'temp': {
             'description': 'Clean temporary files',
@@ -37,7 +48,18 @@ def test_load_config(cleanup_config):
     config = load_config()
     assert 'python' in config
     assert 'temp' in config
-    assert config['python']['patterns'] == ['*.pyc', '__pycache__/*', 'build/*', 'dist/*']
+    assert config['python']['patterns'] == [
+        "**/__pycache__",
+        "**/*.pyc",
+        "**/*.pyo",
+        "**/*.pyd",
+        "**/.pytest_cache",
+        "**/.coverage",
+        "**/htmlcov",
+        "build/",
+        "dist/",
+        "**/*.egg-info"
+    ]
 
 def test_find_matches(temp_dir, monkeypatch):
     # Create test files

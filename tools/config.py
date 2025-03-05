@@ -20,6 +20,7 @@ import shutil
 from typing import Dict, Any, Optional
 import yaml
 import json
+import jsonschema
 from dataclasses import dataclass
 
 @dataclass
@@ -105,17 +106,16 @@ def validate_config(config: Dict[str, Any], schema_path: Optional[Path] = None) 
     if not schema_path or not schema_path.is_file():
         return True  # No schema to validate against
         
+    import jsonschema
     try:
-        import jsonschema
         schema = load_config(schema_path)
         jsonschema.validate(config, schema)
         return True
-    except ImportError:
-        print("Warning: jsonschema package not installed, skipping validation",
-              file=sys.stderr)
-        return True
-    except Exception as e:
+    except jsonschema.exceptions.ValidationError as e:
         print(f"Validation error: {e}", file=sys.stderr)
+        return False
+    except Exception as e:
+        print(f"Error loading schema: {e}", file=sys.stderr)
         return False
 
 def main() -> int:

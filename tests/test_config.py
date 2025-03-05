@@ -89,12 +89,18 @@ def test_save_config_json(temp_dir):
     loaded_config = load_config(output_file)
     assert loaded_config == config
 
-def test_get_managed_configs(config_dir):
+def test_get_managed_configs(config_dir, monkeypatch):
     # Create a template
     template_dir = config_dir / 'templates'
     template_dir.mkdir()
     template_file = template_dir / 'tsconfig.json.template'
     template_file.touch()
+    
+    # Mock find_config_dir to return our test directory
+    monkeypatch.setattr('tools.config.find_config_dir', lambda: config_dir)
+    
+    # Change to the parent directory where the config would be used
+    monkeypatch.chdir(config_dir.parent.parent)
     
     configs = get_managed_configs()
     

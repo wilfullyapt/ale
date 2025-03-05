@@ -98,8 +98,22 @@ def should_ignore(path: str, ignore_patterns: list) -> bool:
     """
     Check if a path matches any of the ignore patterns.
     Patterns use Unix shell-style wildcards.
+    
+    The path can be a full path like 'src/components/Button.test.tsx'
+    and patterns can be simple like '*.test.tsx' or with directories like '__pycache__/*'
     """
-    return any(fnmatch(path, pattern) for pattern in ignore_patterns)
+    for pattern in ignore_patterns:
+        # If pattern contains a slash, it's a path pattern
+        if '/' in pattern:
+            # For path patterns, check both exact match and with wildcard prefix
+            if fnmatch(path, pattern) or fnmatch(path, f"**/{pattern}"):
+                return True
+        else:
+            # For simple patterns, check against the filename
+            filename = path.split('/')[-1]
+            if fnmatch(filename, pattern):
+                return True
+    return False
 
 def get_files_per_output(config, files):
     """ Returns a key, value pair Dict for files to copy """
@@ -128,9 +142,8 @@ def get_files_per_output(config, files):
                 ignore_patterns = dir_config.get('ignore', []) if config.ignore else []
 
             for file in file_list:
-                full_path = f"{dir_name}/{file}"
-                if not should_ignore(full_path, ignore_patterns):
-                    result[full_path.replace('/', '.')] = working_dir / full_path
+                if not should_ignore(file, ignore_patterns):
+                    result[file.replace('/', '.')] = working_dir / file
 
     return result
 

@@ -75,7 +75,7 @@ def test_parse_args(monkeypatch):
     assert config.ignore is True
 
 def test_read_yaml_config(yaml_config, monkeypatch):
-    monkeypatch.setattr('tools.consolidate.Path.__file__', str(yaml_config))
+    monkeypatch.setattr('tools.consolidate.__file__', str(yaml_config))
     
     config = read_yaml_config()
     assert 'frontend' in config
@@ -130,7 +130,7 @@ def test_get_files_per_output(temp_dir, consolidate_config, monkeypatch):
         }
     }
     
-    monkeypatch.setattr('tools.consolidate.Path.__file__', str(test_dir / 'script.py'))
+    monkeypatch.setattr('tools.consolidate.__file__', str(test_dir / 'script.py'))
     
     files_map = get_files_per_output(consolidate_config, config)
     
