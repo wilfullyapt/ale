@@ -14,10 +14,11 @@ Features:
 - Directory-specific analysis
 """
 import sys
+import ast
 import argparse
 from pathlib import Path
 from collections import Counter, defaultdict
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, NamedTuple
 import subprocess
 from datetime import datetime, timedelta
 
@@ -91,9 +92,97 @@ def get_git_stats() -> Dict[str, any]:
 
     return stats
 
+class CodeMetrics(NamedTuple):
+    classes: int
+    functions: int
+    try_statements: int
+    if_statements: int
+    total_lines: int
+    blank_lines: int
+    comment_lines: int
+
+def analyze_python_file(file_path: Path) -> CodeMetrics:
+    """Analyze a Python file for various metrics"""
+    with open(file_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+        lines = content.splitlines()
+        
+    # Count blank lines and comment lines
+    blank_lines = sum(1 for line in lines if not line.strip())
+    comment_lines = sum(1 for line in lines if line.strip().startswith('#'))
+    total_lines = len(lines)
+    
+    # Parse AST for other metrics
+    try:
+        tree = ast.parse(content)
+    except SyntaxError:
+        return CodeMetrics(0, 0, 0, 0, total_lines, blank_lines, comment_lines)
+    
+    class CodeVisitor(ast.NodeVisitor):
+        def __init__(self):
+            self.classes = 0
+            self.functions = 0
+            self.try_statements = 0
+            self.if_statements = 0
+            
+        def visit_ClassDef(self, node):
+            self.classes += 1
+            self.generic_visit(node)
+            
+        def visit_FunctionDef(self, node):
+            self.functions += 1
+            self.generic_visit(node)
+            
+        def visit_AsyncFunctionDef(self, node):
+            self.functions += 1
+            self.generic_visit(node)
+            
+        def visit_Try(self, node):
+            self.try_statements += 1
+            self.generic_visit(node)
+            
+        def visit_If(self, node):
+            self.if_statements += 1
+            self.generic_visit(node)
+    
+    visitor = CodeVisitor()
+    visitor.visit(tree)
+    
+    return CodeMetrics(
+        visitor.classes,
+        visitor.functions,
+        visitor.try_statements,
+        visitor.if_statements,
+        total_lines,
+        blank_lines,
+        comment_lines
+    )
+
 def get_python_stats() -> Dict[str, any]:
     """Get Python-specific statistics"""
     stats = {}
+    
+    # Analyze Python files in the project
+    total_metrics = CodeMetrics(0, 0, 0, 0, 0, 0, 0)
+    python_files = list(Path('.').rglob('*.py'))
+    
+    if python_files:
+        for file in python_files:
+            if 'venv' not in str(file) and '.tox' not in str(file):
+                metrics = analyze_python_file(file)
+                total_metrics = CodeMetrics(*(a + b for a, b in zip(total_metrics, metrics)))
+        
+        stats.update({
+            'python_files': len(python_files),
+            'classes': total_metrics.classes,
+            'functions': total_metrics.functions,
+            'try_statements': total_metrics.try_statements,
+            'if_statements': total_metrics.if_statements,
+            'total_lines': total_metrics.total_lines,
+            'blank_lines': total_metrics.blank_lines,
+            'comment_lines': total_metrics.comment_lines,
+            'code_lines': total_metrics.total_lines - total_metrics.blank_lines - total_metrics.comment_lines
+        })
     
     try:
         # Get test coverage if available
@@ -162,12 +251,30 @@ def print_stats(root_dir: Path = None) -> None:
     python_stats = get_python_stats()
     if python_stats:
         print("\nPython Statistics:")
+        if 'python_files' in python_stats:
+            print(f"  Python Files:       {python_stats['python_files']}")
+        if 'classes' in python_stats:
+            print(f"  Classes:           {python_stats['classes']}")
+        if 'functions' in python_stats:
+            print(f"  Functions:         {python_stats['functions']}")
+        if 'try_statements' in python_stats:
+            print(f"  Try Statements:    {python_stats['try_statements']}")
+        if 'if_statements' in python_stats:
+            print(f"  If Statements:     {python_stats['if_statements']}")
+        if 'total_lines' in python_stats:
+            print(f"  Total Lines:       {python_stats['total_lines']}")
+        if 'blank_lines' in python_stats:
+            print(f"  Blank Lines:       {python_stats['blank_lines']}")
+        if 'comment_lines' in python_stats:
+            print(f"  Comment Lines:     {python_stats['comment_lines']}")
+        if 'code_lines' in python_stats:
+            print(f"  Code Lines:        {python_stats['code_lines']}")
         if 'coverage' in python_stats:
-            print(f"  Test Coverage:      {python_stats['coverage']}%")
+            print(f"  Test Coverage:     {python_stats['coverage']}%")
         if 'dependencies' in python_stats:
-            print(f"  Dependencies:       {python_stats['dependencies']}")
+            print(f"  Dependencies:      {python_stats['dependencies']}")
         if 'dev_dependencies' in python_stats:
-            print(f"  Dev Dependencies:   {python_stats['dev_dependencies']}")
+            print(f"  Dev Dependencies:  {python_stats['dev_dependencies']}")
 
 def main() -> int:
     parser = argparse.ArgumentParser(description='ALE Project Statistics')
